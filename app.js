@@ -25,6 +25,7 @@ const COL_MAP = {};
 // ===== 可調參數 =====
 const HEADER_H = 22;
 const GROUP_KEEP_MAX = 7;
+const DOWN_GROUP_STOCK_KEEP_MAX = 12;
 const GROUP_WEIGHT_MODE = 'RANK';
 const RANK_WEIGHT_MIN = 1.3;
 const RANK_WEIGHT_MAX = 1.8;
@@ -355,9 +356,18 @@ function getTreemapGroupName(svgId, edge, row){
 // 下游：維持原本依群組股票數量排序
 // 上游：改為依「類股平均值」由高到低排序，最多保留 GROUP_KEEP_MAX 個類股
 function selectTreemapGroups(svgId, summaries){
+  // 右邊概念股：不要只挑檔數最多的群組
+  // 改成優先挑「平均表現較佳」且「檔數不要過度膨脹」的群組
   if (svgId !== 'upTreemap') {
     return [...summaries]
-      .sort((a, b) => b.list.length - a.list.length)
+      .filter(g => Number.isFinite(g.avg))
+      .sort((a, b) => {
+        // 先比平均表現
+        if (b.avg !== a.avg) return b.avg - a.avg;
+
+        // 平均表現相同時，再比檔數
+        return b.list.length - a.list.length;
+      })
       .slice(0, GROUP_KEEP_MAX);
   }
 
@@ -945,13 +955,26 @@ function renderTreemap(svgId, hintId, edges, codeField, month, metric, colorMode
     const gw = groupWeights.get(g.rel) || 1;
     const scale = gw / (g.baseSum || EPS);
 
-    const kids = g.baseValues.map(({s, base}) => ({
-      name: s.name || '',
-      code: s.code,
-      raw: s.raw,
-      rel: s.rel || g.rel,
-      value: base * scale
-    }));
+let baseValuesForRender = g.baseValues;
+
+// 右邊概念股：每個群組只保留表現較佳的前幾檔，避免方塊太小全部被濾掉
+if (svgId === 'downTreemap') {
+  baseValuesForRender = [...g.baseValues]
+    .sort((a, b) => {
+      const av = Number.isFinite(a.s.raw) ? a.s.raw : -Infinity;
+      const bv = Number.isFinite(b.s.raw) ? b.s.raw : -Infinity;
+      return bv - av;
+    })
+    .slice(0, DOWN_GROUP_STOCK_KEEP_MAX);
+}
+
+const kids = baseValuesForRender.map(({s, base}) => ({
+  name: s.name || '',
+  code: s.code,
+  raw: s.raw,
+  rel: s.rel || g.rel,
+  value: base * scale
+}));
 
     children.push({
       name: g.rel,
