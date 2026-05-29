@@ -31,3 +31,33 @@ button.primary{background:var(--primary); border:none; color:white; font-weight:
 .node-title{font-size:12px; fill:#e5e7eb}
 .node-line{font-size:12px; fill:#e5e7eb}
 @media (max-width:1100px){ .layout{grid-template-columns:1fr} #upTreemap,#downTreemap{height:480px} }
+/* ===== 概念股補充註記 ===== */
+.concept-note{
+  margin-top:10px;
+  padding:0 2px;
+}
+
+.concept-note-inner{
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+  padding:10px 12px;
+  border:1px solid rgba(255,255,255,0.08);
+  border-radius:10px;
+  background:rgba(15,23,42,0.72);
+  color:#dbeafe;
+  font-size:13px;
+  line-height:1.6;
+}
+
+.concept-note-title{
+  flex:0 0 auto;
+  color:#ffffff;
+  font-weight:800;
+  white-space:nowrap;
+}
+
+.concept-note-text{
+  color:#cbd5e1;
+  font-weight:500;
+}
